@@ -1,0 +1,54 @@
+#rubicon-server-manifest
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rubicon-server-deployment
+  annotations:
+    deployment.kubernetes.io/revision: "rubicon-server created”
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: rubicon-server
+  template:
+    metadata:
+      labels:
+        app: rubicon-server
+    spec:
+      containers:
+        - name: rubicon-server-container
+          image: 033709613517.dkr.ecr.eu-north-1.amazonaws.com/rubicon_server:1695198387
+          env:
+            - name: dburl
+              valueFrom:
+                secretKeyRef:
+                        key: MAIN_DATABASE_URL
+                        name: dburl
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+          ports:
+            - containerPort: 1234
+      imagePullSecrets:
+        - name: rubicon-server-ecr-credentials
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rubicon-server-service
+spec:
+  type: NodePort
+  selector:
+    app: rubicon-server
+  ports:
+    - protocol: TCP
+      nodePort: 30036
+      port: 1234
+      targetPort: 1234
